@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tägliche Produkte</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: #f4f4f6;
+    color: #1a1a1a;
+  }
+  h1 {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+  }
+  #generated {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 16px;
+  }
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .card img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: #eee;
+  }
+  .card h2 {
+    font-size: 1rem;
+    margin: 0 0 6px 0;
+  }
+  .price {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #1a7a1a;
+    margin-bottom: 6px;
+  }
+  .cost {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .desc {
+    font-size: 0.85rem;
+    color: #444;
+    white-space: pre-line;
+    margin-bottom: 10px;
+  }
+  a.source {
+    font-size: 0.8rem;
+  }
+  #download-bar {
+    position: sticky;
+    top: 0;
+    background: #f4f4f6;
+    padding-bottom: 10px;
+  }
+  #download-bar a {
+    display: inline-block;
+    background: #1a1a1a;
+    color: white;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+  #empty {
+    color: #666;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+  <div id="download-bar">
+    <h1>Heutige Produkte</h1>
+    <div id="generated"></div>
+    <a href="data/ebay_upload.csv" download>CSV für eBay herunterladen</a>
+  </div>
+  <div id="products"></div>
+  <div id="empty" style="display:none;">
+    Noch keine Daten vorhanden. Der erste automatische Lauf kommt, sobald die
+    GitHub Action einmal gelaufen ist (oder manuell über "Run workflow" in
+    GitHub Actions starten).
+  </div>
+
+  <script>
+    fetch("data/products.json?" + Date.now())
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("generated").textContent =
+          "Aktualisiert: " + new Date(data.generated_at).toLocaleString("de-DE");
+
+        const container = document.getElementById("products");
+        if (!data.products || data.products.length === 0) {
+          document.getElementById("empty").style.display = "block";
+          return;
+        }
+
+        data.products.forEach(p => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const img = p.images && p.images.length ? p.images[0] : "";
+
+          card.innerHTML = `
+            ${img ? `<img src="data/${img}" alt="${p.title}" />` : ""}
+            <h2>${p.title}</h2>
+            <div class="price">${p.sell_price_eur.toFixed(2)} €</div>
+            <div class="cost">Einkauf: ${p.cost_price_eur.toFixed(2)} €</div>
+            <div class="desc">${p.description}</div>
+            <a class="source" href="${p.source_url}" target="_blank">Original ansehen</a>
+          `;
+          container.appendChild(card);
+        });
+      })
+      .catch(() => {
+        document.getElementById("empty").style.display = "block";
+      });
+  </script>
+</body>
+</html>
