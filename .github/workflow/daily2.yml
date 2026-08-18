@@ -3,7 +3,7 @@ name: Tägliche Produktauswahl
 on:
   schedule:
     # Läuft täglich um 6:00 UTC (= 7:00 oder 8:00 deutscher Zeit, je nach Sommerzeit)
-    - cron: "0 6 * * *"
+       - cron: 0 6 * * *
   workflow_dispatch: {}  # erlaubt manuelles Starten über den "Run workflow"-Button
 
 permissions:
