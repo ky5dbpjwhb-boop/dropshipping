@@ -1,0 +1,49 @@
+name: Tägliche Produktauswahl
+
+on:
+  schedule:
+    # Läuft täglich um 6:00 UTC (= 7:00 oder 8:00 deutscher Zeit, je nach Sommerzeit)
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}  # erlaubt manuelles Starten über den "Run workflow"-Button
+
+permissions:
+  contents: write
+
+jobs:
+  run-dropship-tool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Abhängigkeiten installieren
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Tägliches Skript ausführen
+        run: python main.py
+
+      - name: Debug-Screenshots hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug/
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Ergebnisse committen und pushen
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p docs/data
+          git add docs/data
+          git diff --staged --quiet || git commit -m "Tägliches Produkt-Update"
+          git push
